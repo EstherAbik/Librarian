@@ -20,6 +20,7 @@ from langchain_mongodb import MongoDBAtlasVectorSearch
 from langchain_core.runnables import RunnableLambda
 from langchain_core.load import dumps, loads
 from collections import Counter
+import threading
 
 
 # Load environment variables
@@ -71,11 +72,33 @@ def get_embeddings_and_llm():
     llm = init_chat_model(model="gemini-2.5-flash",streaming=True)
     return embeddings, llm
 
+# Thread-safe wrapper: instantiate a fresh SentenceTransformerEmbeddings for each call
+# to avoid sharing the underlying tokenizer/tokenizer state across threads.
+class LockedSentenceTransformerEmbeddings:
+    """Single cached SentenceTransformerEmbeddings protected by a threading.Lock.
+
+    This avoids repeatedly constructing the model (which can trigger meta-tensor
+    moves) while serializing calls to the tokenizer/model to prevent concurrent
+    access issues.
+    """
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
+        self._inst = SentenceTransformerEmbeddings(model_name=model_name)
+        self._lock = threading.Lock()
+
+    def embed_documents(self, texts):
+        with self._lock:
+            return self._inst.embed_documents(texts)
+
+    def embed_query(self, text):
+        with self._lock:
+            return self._inst.embed_query(text)
+
+
 @st.cache_resource
 def get_embeddings_and_llm():
-    """Initialize embeddings and LLM models (cached)."""
-    embeddings = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
-    llm = init_chat_model("gemini-2.5-flash", model_provider="google_genai")
+    """Return a cached locked embeddings instance and an LLM instance."""
+    embeddings = LockedSentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+    llm = init_chat_model("gemini-2.5-flash", model_provider="google_genai", streaming=True)
     return embeddings, llm
 
 @st.cache_resource
