@@ -1,9 +1,0 @@
-# Core dependencies
-streamlit==1.51.0
-pymongo==4.15.3
-
-# LangChain ecosystem
-langchain==1.2.13
-langchain-core==1.2.13
-langchain-google-genai==3.0.1
-langchain-mongodb==0.7.1
