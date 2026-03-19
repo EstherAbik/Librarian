@@ -4,7 +4,7 @@ pymongo==4.15.3
 python-dotenv==1.0.1
 openai==1.50.1
 
-# LangChain ecosystem (latest available on PyPI)
+# LangChain ecosystem
 langchain==1.2.13
 langchain-core==1.2.13
 langchain-classic==1.0.0
@@ -15,5 +15,5 @@ langchain-text-splitters==1.0.0
 langchain-google-genai==3.0.1
 langchain-mongodb==0.7.1
 
-# Required for embeddings / rerankers
+# Embeddings / rerankers
 sentence-transformers==2.7.0
